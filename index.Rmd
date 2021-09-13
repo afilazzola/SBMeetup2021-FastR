@@ -1,6 +1,6 @@
-
-# Fast-R: Improving the reproducibility and efficiency of your coding
-
+---
+title: "Fast-R: Improving the reproducibility and efficiency of your coding"
+---
 
 ## Instructors
 
