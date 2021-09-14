@@ -1,0 +1,87 @@
+---
+output:
+  html_document:
+    theme: sandstone
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+editor_options: 
+  chunk_output_type: console
+---
+# Must go faster
+  
+![](MustGoFaster.jpg)
+
+
+Below are two examples of scripts that currently are inefficient. We ask that you discuss amongst yourselves ways of improving these codes to be faster. We can employ the Microbenchmark package to assess if you successfully improved the speed. 
+
+### How to use microbenchmark
+
+Microbenchmark runs the same functions repeatedly and then calculates run times based on min, median, and max from 100 evaluations. Running the same operations repeatedly helps account for variation in individual run times. You can add multiple expressions to same call to compare them side by side. For our purposes here, we are simply trying to beat our best time. 
+
+```{r}
+library(microbenchmark)
+
+microbenchmark(
+
+{
+## For loops
+sums <- c()
+for(i in 1:ncol(mtcars)){
+  t <- sum(mtcars[,i])
+  sums <- c(sums,t)
+}
+
+},
+
+{
+## Apply family
+apply(mtcars, 2, sum)
+  
+}, unit="ms")
+
+```
+
+### Example 1 - Guessing a word for hangman
+
+Create a function that will guess the written word faster than the current script
+
+```{r}
+word <- c("Batman")
+
+
+microbenchmark({
+guess <- c()
+for(i in 1:nchar(word)){
+  
+  for(j in 1:52){
+    if(substr(word,i,i) == c(letters,LETTERS)[j]) {
+  break
+  }
+  }
+  guess <- c(guess,c(letters,LETTERS)[j]) ## output guess letter
+  guess <- paste(guess, collapse="")
+}
+print(paste0(guess, "Number of guesses = ", (i*52)+j))
+})
+```
+
+
+### Example 2 - Create all possible combinations hands of five card poker
+
+Make all possible hands of poker when played wih five hands. One might accomplish this using expand.grid to create every possible combination, but the total possible combinations where order drawn matters totals too large a number for many computers to further operate on (+7 GB). There are actually only 2,598,960 unique hands that can be drawn. Write a function to produce all these hands as quickly as possible. 
+
+```{r}
+## Total number of card combinations
+choose(52,5)
+
+## Load deck dataframe
+cardDeck <- data.frame(cardID = 1:52, 
+                   suite = rep(c("Spades","Clubs","Hearts","Diamonds"), each=13),
+                   value = c(1:13),
+                   color = rep(c("Black","Red"),each=26))
+
+## Deal hand
+deal <- cardDeck[sample(cardDeck$cardID, 5, replace=F),]
+deal
+```

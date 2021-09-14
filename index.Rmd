@@ -33,7 +33,7 @@ Time   | Goal
 5:30   | Introduction - Why Iterate
 5:40 | [Basic Loops](forloops/forLoops.html)
 6:00  | [Parallelization](Parallelization/parallelization.html)
-6:30 | Hack-a-thon
+6:30 | [Hack-a-thon](Exercises/Exercises.html)
 6:50 | Debrief and Q/A
 
 **Past events**: We have previous run this workshop at [SORTEE 2021](https://www.sortee.org/events/) and [CSEE 2021](https://csee-scee2021.ca/). 
