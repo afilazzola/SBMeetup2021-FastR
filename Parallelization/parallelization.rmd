@@ -240,7 +240,7 @@ RFall
 
 ```{r}
 ### Load data
-source("Parallelization//climSim.r")
+source("climSim.r")
 head(climate)
 head(population)
 futureClimate <- data.frame(MAT = rnorm(10000, mean = 16, sd=3),
