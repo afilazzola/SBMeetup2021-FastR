@@ -42,7 +42,7 @@ apply(mtcars, 2, sum)
 
 ```
 
-### Example 1 - Guessing a word for hangman
+### Exercise 1 - Guessing a word for hangman
 
 Create a function that will guess the written word faster than the current script
 
@@ -50,7 +50,6 @@ Create a function that will guess the written word faster than the current scrip
 word <- c("Batman")
 
 
-microbenchmark({
 guess <- c()
 for(i in 1:nchar(word)){
   
@@ -63,11 +62,11 @@ for(i in 1:nchar(word)){
   guess <- paste(guess, collapse="")
 }
 print(paste0(guess, "Number of guesses = ", (i*52)+j))
-})
+
 ```
 
 
-### Example 2 - Create all possible combinations hands of five card poker
+### Exercise 2 - Create all possible combinations hands of five card poker
 
 Make all possible hands of poker when played wih five hands. One might accomplish this using expand.grid to create every possible combination, but the total possible combinations where order drawn matters totals too large a number for many computers to further operate on (+7 GB). There are actually only 2,598,960 unique hands that can be drawn. Write a function to produce all these hands as quickly as possible. 
 
