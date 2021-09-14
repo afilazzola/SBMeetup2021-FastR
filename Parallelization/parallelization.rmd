@@ -5,6 +5,8 @@ output:
     toc: yes
     toc_depth: 3
     toc_float: yes
+editor_options: 
+  chunk_output_type: console
 ---
 # Parallelization
   
@@ -137,96 +139,199 @@ There is another computer science concept we need to think about when crafting p
 
 ![https://en.wikipedia.org/](Amdahl.png)
 
-However! Where this becomes particularly complicated is that your parallel script should actually be as simple as possible. It can be tempting to put `foreach` at the beginning of your script and run everything top-bottom changing only the necessary variables each iteration and throw enough cores at it to run faster. This strategy has two problems: one is with respect to efficiency and one is computational. To expore these problems, let's look at an example of species distribution modelling conducted using two different parallel styles. Here, we are trying to see if a species will be found at given locations in the future from climate change. 
+However! Where this becomes particularly complicated is that your parallel script should actually be as simple as possible. It can be tempting to put `foreach` at the beginning of your script and run everything top-bottom changing only the necessary variables each iteration and throw enough cores at it to run faster. This strategy has two problems: one is with respect to efficiency and one is computational. To expore these problems, let's look at an example of modelling the response of a population to different climate patterns. 
+
+### Problem 1: Choosing what to run in parallel
+
+**Running in series**
 
 ```{r eval=FALSE}
 ### Load data
-futureLocations <- read.csv("futureSites.csv")
-currentClimate <- stack("currentClimate.tif")
-futureClimate <- stack("futureClimate.tif")
-speciesFiles <- list.files("./species/", full.names = T, pattern=".csv")
-
-## Register backend
-cl <- makeCluster(11, type="PSOCK")
-registerDoParallel(cl)
-clusterExport(cl, "futureLocations","currentClimate","futureClimate","speciesFiles")
+source("Parallelization//climSim.r")
+head(climate)
+head(population)
 
 
-#### Version 1 #####  Run everything in parallel
-iter <-foreach(i = 1:length(speciesFiles), .combine=rbind, .errorhandling = "remove", .packages=c("raster","ENMeval")) %dopar% {
+## Load random forest library
+library(randomForest)
 
-## Get presence and psuedo-absence
-spLoad <- read.csv(speciesFiles[i], stringsAsFactors = F)
-backgr <- randomPoints(currentClimate, n=10000, p =sp1)  %>% data.frame()
-
-## Run species distribution modelling
-max1 <- ENMevaluate(spLoad, currentClimate, bg.coords = backgr,
-                    fc = c("L", "Q", "P", "LQ", "HQ", "QPH", "QPHT", "LQHP"), RMvalues=seq(0.5, 3, 0.5))
-
-## Predict occurrence with future climate
-futureSites <- extract(futureClimate, futureLocations) ## Extract future climate
-futurePred <- predict(futureSites, max1) ## determine probability for future climate
-futurePred
+## Function to extract importance variables
+impSort <- function(x) { 
+  impDf <-   round(data.frame(x$importance),4)
+  impDf <- impDf[order(impDf[,1], decreasing = T),]
+  return(impDf)
 }
 
+## Conduct random forest
+rf1 <- randomForest(population[,"Pop1"] ~ MAT + MAP + TMN + TMX, importance=T, ntree=1000)
+rf1
 
-#### Version 2 #####  Run only Maxent elements in parallel
-futureSites <- extract(futureClimate, futureLocations) ## Extract future climate
+## Create output variables
+IF <- impSort(rf1)
+rsq <- max(rf1$rsq)
 
+## Load future climate
+futureClimate <- data.frame(MAT = rnorm(10000, mean = 16, sd=3),
+           MAP = rbinom(10000, size = 20, prob=0.05)*rnorm(2000,mean=12, sd=3),
+           TMN = rnorm(10000, mean = -4, sd=3),
+           TMX = rnorm(10000, mean = 35, sd=3))
 
-iter <-foreach(i = 1:length(speciesFiles), .combine=rbind, .errorhandling = "remove", .packages=c("raster","ENMeval")) %dopar% {
+## Predict future population change
+futurePred <- median(predict(rf1, futureClimate))
 
-## Get presence and psuedo-absence
-spLoad <- read.csv(speciesFiles[i], stringsAsFactors = F)
-backgr <- randomPoints(currentClimate, n=10000, p =sp1)  %>% data.frame()
+## Output data.frame
+output <- IF
+output[,"ClimateVar"] <- row.names(output)
+output[,"Population"] <- "Pop1"
+output[,"RSQ"] <- rsq
+output[,"futureVal"] <- futurePred
 
-## Run species distribution modelling
-max1 <- ENMevaluate(spLoad, currentClimate, bg.coords = backgr,
-                    fc = c("L", "Q", "P", "LQ", "HQ", "QPH", "QPHT", "LQHP"), RMvalues=seq(0.5, 3, 0.5))
+output
 
-## Predict occurrence with future climate
-futurePred <- predict(futureSites, max1) ## determine probability for future climate
-futurePred
-}
 
 ```
 
-In the first version we have the extracting of future climate within the loop and in the other we have it pulled out prior. The output from the extracting future climate will be the same across every iteration of the loop, thus we are losing efficiency by having this line of code run repeatedly over all the cores assigned. This slows down our overall run time and uses unnecessary computer power. This explains the problem of reduced efficiency, but there is also a problem with computational resources. 
+**Running everything in parallel**
+```{r}
+## Register backend
+cl <- makeCluster(4, type="PSOCK")
+registerDoParallel(cl)
 
-In the first version, the future climate raster needs to be exported to each core for the loop to work. If that raster is 2 GB, that is 2 GB of memory that needs to be dedicated to each core (in our example 22 GB total). However, if the climate is extracted prior to the loop, like in the second version, then only the dataframe needs to be exported. That dataframe is likely only a few MB in size saving considerably the amount of memory required. Over consuming memory can slow computational time, exhaust computer resources, and cause the job to fail if it exceeds the available memory on a computer (*oom-kill* events on a super computer). AS a general rule, try to keep your parallel processes simple and ensure there is nothing repeated identically across iterations. 
 
-Before we return to practical cases, there is one more law I think is worth mentioning. Parkinson's law proposes that:
-> Work complicates to fill the available time. 
+#### Version 1 #####  Run everything in parallel
+RFall <-  foreach(i = c("Pop1","Pop2","Pop3","Pop4"), .combine=rbind, .errorhandling = "remove", .packages=c("randomForest")) %dopar% {
 
-I think this is worth mentioning because there is the case where the additional time saved by parallelization ends up be used anyways for the same job. For instance, say a researcher has determined that 999 permutations of their model is necessary for their project, but the run time is 1 hour. They invest the time to create a script to execute in parallel and across multiple cores so their run time has been reduced to 6 minutes. *"Wow six minutes, that's so fast"* the researcher exclaims, *"Perhaps I can run more permutations then"*. And so they increase the permutations to 9999 and the run time returns to 60 minutes. Is 9999 better than 999 permutations? Well yes, but they were satisifed and had proper justification for 999 permutations. While this example is exagerated it is not far from the truth in some practice especially when one includes the time necessary to code out the parallel operations.
+### Load data
+source("Parallelization//climSim.r")
+head(climate)
+head(population)
+  
+## Conduct random forest
+rf1 <- randomForest(population[,i] ~ MAT + MAP + TMN + TMX, importance=T, ntree=1000)
+
+## Create output variables
+IF <- impSort(rf1)
+rsq <- max(rf1$rsq)
+
+## Load future climate
+futureClimate <- data.frame(MAT = rnorm(10000, mean = 16, sd=3),
+           MAP = rbinom(10000, size = 20, prob=0.05)*rnorm(2000,mean=12, sd=3),
+           TMN = rnorm(10000, mean = -4, sd=3),
+           TMX = rnorm(10000, mean = 35, sd=3))
+
+## Predict future population change
+futurePred <- median(predict(rf1, futureClimate))
+
+## Output data.frame
+output <- IF
+output[,"ClimateVar"] <- row.names(output)
+output[,"Population"] <- "Pop1"
+output[,"RSQ"] <- rsq
+output[,"futureVal"] <- futurePred
+
+output
+  
+}
+RFall
+
+```
+
+**Running select items in parallel**
+
+```{r}
+### Load data
+source("Parallelization//climSim.r")
+head(climate)
+head(population)
+futureClimate <- data.frame(MAT = rnorm(10000, mean = 16, sd=3),
+           MAP = rbinom(10000, size = 20, prob=0.05)*rnorm(2000,mean=12, sd=3),
+           TMN = rnorm(10000, mean = -4, sd=3),
+           TMX = rnorm(10000, mean = 35, sd=3))
+
+
+## Register backend
+cl <- makeCluster(4, type="PSOCK")
+registerDoParallel(cl)
+clusterExport(cl, c("climate", "population", "futureClimate")) ## NB you need to specify cluster export for loaded variables
+
+
+#### Version 2 #####  Run only modelling in parallel
+RFall <-  foreach(i = c("Pop1","Pop2","Pop3","Pop4"), .combine=rbind, .errorhandling = "remove", .packages=c("randomForest")) %dopar% {
+
+## Conduct random forest
+rf1 <- randomForest(population[,i] ~ MAT + MAP + TMN + TMX, importance=T, ntree=1000)
+
+## Create output variables
+IF <- impSort(rf1)
+rsq <- max(rf1$rsq)
+
+## Predict future population change
+futurePred <- median(predict(rf1, futureClimate))
+
+## Output data.frame
+output <- IF
+output[,"ClimateVar"] <- row.names(output)
+output[,"Population"] <- "Pop1"
+output[,"RSQ"] <- rsq
+output[,"futureVal"] <- futurePred
+
+output
+  
+}
+RFall
+
+```
+
+In the first version we have loading data within the loop and in the other we have it pulled out prior. The data variables will be the same across every iteration of the loop, thus we are losing efficiency by having this line of code run repeatedly over all the cores assigned. This slows down our overall run time and uses unnecessary computer power. This explains the problem of reduced efficiency, but there is also a problem with computational resources. 
+
+### Problem 2: We require more minerals!
+
+![](resources.png)
+
+Anything contained within the loop must be exported to each core. Depending on the core specifications, this means duplication of the resources. Estimating resource consumption can be accomplished through basic arithmetic and monitoring resources (e.g., Task Manager in Windows). If an operation in series requires 2 GB, then executed across 4 cores will likely consume 8 GB. Most laptops come with between 8 and 16 GB RAM but with 8 cores. That means parallel computing is likely to fail from memory issues before being able to efficiently use all of its cores. This issue also re-appears on supercomputers where access to 20+ cores per computer can rapidly exhaust available memory (*oom-kill* events from SLURM). Keep in mind some of that memory will be dedicated to the operating system, having R open, and any other programs running (e.g., Chrome, Safari, Word). 
+
+
+**Solutions to minimize memory usage**
+- Trying to excute operations outside the loop is the most effective way to minimize this scaling issue. The loop should contain the least amount of data to execute properly. 
+- Write outputs to disk rather than accumulate in the memory. This is especially true for complex objects, such as rasters, which will rapidy exhaust available memory when they could be written to hard-disk. 
+- For Unix-based machines on a single computer, use FORK instead of PSOCK. FORK will used a shared environment and not duplicate objects. This will NOT work on a Windows based computer or on multiple computers set up as a cluster. 
+- Break large tasks into smaller tasks. Turn one large loop into two loops, so less overhead is required. 
 
 
 ### Parallel Functions
 
-With all that foundation in place, it makes sense to talk about the easier side of parallel computing in R. Some functions in R inherently have parallelization built into them because these functions typically take long to run. For instance, the above example of species distribution modelling `ENMevaluate` includes arguments for parallization. In these cases it is as simply as supplying additional arguments specifying the number of cores, or a different function name that identifies its the parallel equivalent. 
+With all that foundation in place, it makes sense to talk about the easier side of parallel computing in R. Some functions in R inherently have parallelization built into them because these functions typically take long to run. 
 
-Let's take a look at an example of model selection using the `dredge` function in `MuMIn` package. This function conducts models for every combination of predictor variables and thus can be slow when you have many predictors. Luckily, `pdredge` has been developed that allows for easy addition of parallelization. 
-
+For instance, the above example of random forest we used the default settings. However, if we were trying to do a high quality random forest we would use `caret` package for model selection to pick the best settings. The `train` function from `caret` tunes the criteria of the random forest to best settings but requires fitting numerous models and resampling. This can be extremely time consuming because random forest on its own takes some time to iterate through all 1000 trees. Thus, `caret` has inherently installed parallelization that only requires cluster identification. 
 
 ```{r}
-## Model to iterate through
-nullModel <- lm(body_mass_g ~ year * species * island + bill_length_mm + flipper_length_mm + bill_depth_mm, 
-                data=penguins, na.action="na.fail")
+library(caret)
 
-## Time to run in series
-system.time(
-models <- MuMIn::dredge(nullModel)
-)
 
-## Set up cluster and the number of cores to be used 
-cl <- makeCluster(4, type="PSOCK") ## specify number of cores, and type of cluster (PSOCK or FORK)
-registerDoParallel(cl) ## register the backend into a virtual node
-clusterExport(cl, varlist=list("penguins")) ## export the dataframe to each core
+## Register backend
+cl <- makeCluster(6, type="PSOCK")
+registerDoParallel(cl)
+clusterExport(cl, c("climate", "population", "futureClimate"))
 
-## Time to run in parallel
-system.time(
-models <- MuMIn::pdredge(nullModel, cluster=cl)
-)
+## set training parameters
+control <- trainControl(method='repeatedcv', 
+                        number=10, 
+                        repeats=3,
+                        search = 'random')
+## train random forest
+tuneFit <- train(climate, population[,"Pop1"],
+                 method="rf", 
+                 tuneLength = 10,
+                 trControl = control,
+                 allowParallel = T) ## allow parallelization
+tuneFit
+
+
+## Unregister a parallel cluster
+unregister_dopar <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
 ```
 
 This is certainly the easier side of parallel computing in R. When dealing with a particularly slow function, you should explore if a parallel version already exists. More often than not, it is these bottleneck functions that are slowing down the overall computational time of your script that can be improved. 
