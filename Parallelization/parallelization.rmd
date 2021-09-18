@@ -449,3 +449,24 @@ write.csv(futurePred, paste0("~/projects/out",speciesFiles))
 ```
 
 For more details on how to use R on a super computer, Compute Canada has a good [Wiki](https://docs.computecanada.ca/wiki/R) on the topic. 
+
+
+
+### Next Module
+
+<style>
+.btn {
+  border: none;
+  background-color: inherit;
+  padding: 14px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-block;
+  color: orange;
+}
+.btn:hover {background: #5DADE2;}
+</style>
+
+
+<a class="btn" href="https://afilazzola.github.io/SBMeetup2021-FastR/"> Home </a>
+<a class="btn" href="https://afilazzola.github.io/SBMeetup2021-FastR/Exercises/Exercises.html"> Hack-a-thon </a>

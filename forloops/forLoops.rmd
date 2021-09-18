@@ -245,3 +245,27 @@ for(i in 2007:2009){
 <br>
 
 
+
+
+
+### Next Module
+
+<style>
+.btn {
+  border: none;
+  background-color: inherit;
+  padding: 14px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-block;
+  color: orange;
+}
+.btn:hover {background: #5DADE2;}
+</style>
+
+
+<a class="btn" href="https://afilazzola.github.io/SBMeetup2021-FastR/"> Home </a>
+<a class="btn" href="https://afilazzola.github.io/SBMeetup2021-FastR/Parallelization/parallelization.html"> Parallelization </a>
+
+
+

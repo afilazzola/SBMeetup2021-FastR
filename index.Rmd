@@ -23,6 +23,14 @@ With the wide-spread adoption of R for data management and analysis, there is hu
 
 **Notes**: [Live Notepad]
 
+**Feedback**: [Survey](https://easyretro.io/publicboard/yGVXR9eRebW4zP9Llz0XafsmuJe2/d7fc7d7f-98b7-45d3-b5ae-009b89bfb7b1)
+
+## Learning objectives
+
+1) Understand the basics of computer resources and how to best optimized their use.
+2) Know the limitations associated with parallel computing and the specific instances where it can improve computation timing. 
+3) Demonstrate the capacity to conduct an operation in parallel using two or more cores. 
+
 
 ## Schedule 
 (time in PDT)
@@ -48,6 +56,10 @@ Windows        |   Mac OS  X   |      Linux
 Install R by downloading and running [this .exe](http://cran.r-project.org/bin/windows/base/release.htm) file from [CRAN](http://cran.r-project.org/index.html). Please also install the [RStudio IDE](http://www.rstudio.com/ide/download/desktop).| Install R by downloading and running [this .pkg](http://cran.r-project.org/bin/macosx/R-latest.pkg) file from [CRAN](http://cran.r-project.org/index.html). Please also install the [RStudio IDE](http://www.rstudio.com/ide/download/desktop).|You can download the binary files for your distribution from [CRAN](http://cran.r-project.org/index.html). Please also install the [RStudio IDE](http://www.rstudio.com/ide/download/desktop)
 
 **Packages we will be using:** We recommend you install these ahead of time and ensure they load correctly to reduce troubleshooting in the workshop. 
+```{r eval=F}
+install.packages(c("palmerpenguins","foreach","doParallel","randomForest","caret","broom","microbenchmark"))
+
+```
 
 
 ## Other workshops

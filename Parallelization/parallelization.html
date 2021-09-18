@@ -1654,7 +1654,7 @@ corVal &lt;- cor(bootDF$bill_length_mm, bootDF$bill_depth_mm, use=&quot;complete
 corVal
 }
 outCor[1:5]</code></pre>
-<pre><code>## [1] -0.2367800 -0.2553759 -0.2234690 -0.2599738 -0.2637448</code></pre>
+<pre><code>## [1] -0.2883159 -0.2127106 -0.2060403 -0.1837284 -0.3389094</code></pre>
 <p>One of the larger challenges with R and parallel computing is managing the environment workspace to the separate cores. Every object and package needs to be exported separetly for the operation to work in parallel. The particularly tricky part about this, there is often no error message provided. The code will simply be executed slowly in sequential order rather than parallel.</p>
 <p>It is good practice to export the environment and dataframes to each of the respective cores. While this may work on your personal computer, it will not always work and will infrequently run in parallel properly on a super computer. This is also true for exporting libraries. Let’s take a look at what an error might look without specifying a package</p>
 <pre class="r"><code>library(broom)
@@ -1987,6 +1987,22 @@ futurePred &lt;- predict(futureSites, max1) ## determine probability for future 
 write.csv(futurePred, paste0(&quot;~/projects/out&quot;,speciesFiles))</code></pre>
 <p>For more details on how to use R on a super computer, Compute Canada has a good <a href="https://docs.computecanada.ca/wiki/R">Wiki</a> on the topic.</p>
 </div>
+</div>
+<div id="next-module" class="section level3">
+<h3>Next Module</h3>
+<style>
+.btn {
+  border: none;
+  background-color: inherit;
+  padding: 14px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-block;
+  color: orange;
+}
+.btn:hover {background: #5DADE2;}
+</style>
+<p><a class="btn" href="https://afilazzola.github.io/SBMeetup2021-FastR/"> Home </a> <a class="btn" href="https://afilazzola.github.io/SBMeetup2021-FastR/Exercises/Exercises.html"> Hack-a-thon </a></p>
 </div>
 </div>
 
