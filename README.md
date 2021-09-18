@@ -23,6 +23,14 @@ With the wide-spread adoption of R for data management and analysis, there is hu
 
 **Notes**: [Live Notepad]
 
+**Feedback**: [Survey](https://easyretro.io/publicboard/yGVXR9eRebW4zP9Llz0XafsmuJe2/d7fc7d7f-98b7-45d3-b5ae-009b89bfb7b1)
+
+## Learning objectives
+
+1) Understand the basics of computer resources and how to best optimized their use.
+2) Know the limitations associated with parallel computing and the specific instances where it can improve computation timing. 
+3) Demonstrate the capacity to conduct an operation in parallel using two or more cores. 
+
 
 ## Schedule 
 (time in PDT)
