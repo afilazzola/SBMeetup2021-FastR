@@ -298,6 +298,8 @@ Anything contained within the loop must be exported to each core. Depending on t
 - Break large tasks into smaller tasks. Turn one large loop into two loops, so less overhead is required. 
 
 
+*N.B.* FORK typically runs faster (up to 40%) than PSOCK as described in this [post](https://www.r-bloggers.com/2019/06/parallel-r-socket-or-fork/)
+
 ### Parallel Functions
 
 With all that foundation in place, it makes sense to talk about the easier side of parallel computing in R. Some functions in R inherently have parallelization built into them because these functions typically take long to run. 

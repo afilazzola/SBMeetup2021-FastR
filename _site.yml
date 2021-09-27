@@ -1,0 +1,21 @@
+name: "FastR2021"
+navbar:
+  title: "FastR2021"
+  left:
+    - text: "info"
+      href: index.html
+    - text: "forloops"
+      href: forloops/forLoops.html
+    - text: "Parallelization"
+      href: Parallelization/parallelization.html 
+    - text: "Hack-a-thon"
+      href: Exercises/Exercises.html
+output_dir: "."
+output:
+  html_document:
+    theme: sandstone
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+    include: 
+      after_body: footer.html

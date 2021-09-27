@@ -44,7 +44,7 @@ apply(mtcars, 2, sum)
 
 ### Exercise 1 - Guessing a word for hangman
 
-Create a function that will guess the written word faster than the current script
+Create a foreach loop that will guess the written word in parallel compared to the current script
 
 ```{r}
 word <- c("Batman")
@@ -61,26 +61,39 @@ for(i in 1:nchar(word)){
   guess <- c(guess,c(letters,LETTERS)[j]) ## output guess letter
   guess <- paste(guess, collapse="")
 }
-print(paste0(guess, "Number of guesses = ", (i*52)+j))
+print(paste0(guess, " Number of guesses = ", (i*52)+j))
 
 ```
 
 
-### Exercise 2 - Create all possible combinations hands of five card poker
+### Exercise 2 - Tune a Random Forest model
 
-Make all possible hands of poker when played wih five hands. One might accomplish this using expand.grid to create every possible combination, but the total possible combinations where order drawn matters totals too large a number for many computers to further operate on (+7 GB). There are actually only 2,598,960 unique hands that can be drawn. Write a function to produce all these hands as quickly as possible. 
+Find the optimal tuning for a Random Forest using foreach. Random forest has parameters that can be tuned to minimize error and increase prediction. Most notably, these include the `mtry` parameter which determines the number of predictors to test at each split and the `ntrees` parameter which determines the number of trees to grow. The `caret` package has a nice wrapper that allows for model tuning between one of these parameters, but it takes a bit of extra work to test both simultatenous and to select a specific metric to evaluate. We can accomplish the same thing using loops but since random forest typically runs slow, a for loop will take a long time. Write a parallel loop to execute the below code faster.  
 
-```{r}
-## Total number of card combinations
-choose(52,5)
+[Here](https://cran.r-project.org/web/packages/foreach/vignettes/nested.html) is a good resource on nesting `foreach` loops. To transform multiple nested loops into a single parallelized operation, you'll need to make use of the `%:%` operator. 
 
-## Load deck dataframe
-cardDeck <- data.frame(cardID = 1:52, 
-                   suite = rep(c("Spades","Clubs","Hearts","Diamonds"), each=13),
-                   value = c(1:13),
-                   color = rep(c("Black","Red"),each=26))
+```{r eval=F}
+library(randomForest)
+set.seed(11)
 
-## Deal hand
-deal <- cardDeck[sample(cardDeck$cardID, 5, replace=F),]
-deal
+source("Parallelization//climSim.r")
+
+head(climate)
+head(population)
+
+trees <- c(500,1000,1500,2000)
+mtrys <- 1:ncol(climate)
+
+outDF <- data.frame()
+for(i in trees){
+  for(j in mtrys){
+  
+  rf1 <- randomForest(Pop1 ~ MAT + MAP + TMN + TMX, importance=T, ntree=i, data=population) 
+  RSQ <- rf1$rsq[length(rf1$rsq)] ## extract psuedo rsquared values
+  MSE <- rf1$mse[length(rf1$mse)] ## extracted mean square errors
+  tempDF <- data.frame(ntrees = i, mtry = j, rsq=RSQ, mse=MSE) ## create dataframe of parameters and outputs
+  outDF <- rbind(outDF, tempDF)
+  }
+}
+outDF
 ```

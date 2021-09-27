@@ -1555,12 +1555,12 @@ apply(mtcars, 2, sum)
 ##  {     sums &lt;- c()     for (i in 1:ncol(mtcars)) {         t &lt;- sum(mtcars[, i])         sums &lt;- c(sums, t)     } }
 ##                                                                                       {     apply(mtcars, 2, sum) }
 ##     min      lq     mean  median      uq    max neval cld
-##  1.9124 1.97835 2.252350 2.08020 2.38785 4.4945   100   b
-##  0.1032 0.11250 0.136698 0.12945 0.14595 0.3960   100  a</code></pre>
+##  1.8881 1.95465 2.172234 2.02575 2.28515 3.8610   100   b
+##  0.1024 0.11085 0.133713 0.12285 0.13335 0.8181   100  a</code></pre>
 </div>
 <div id="exercise-1---guessing-a-word-for-hangman" class="section level3">
 <h3>Exercise 1 - Guessing a word for hangman</h3>
-<p>Create a function that will guess the written word faster than the current script</p>
+<p>Create a foreach loop that will guess the written word in parallel compared to the current script</p>
 <pre class="r"><code>word &lt;- c(&quot;Batman&quot;)
 
 
@@ -1575,30 +1575,36 @@ for(i in 1:nchar(word)){
   guess &lt;- c(guess,c(letters,LETTERS)[j]) ## output guess letter
   guess &lt;- paste(guess, collapse=&quot;&quot;)
 }
-print(paste0(guess, &quot;Number of guesses = &quot;, (i*52)+j))</code></pre>
-<pre><code>## [1] &quot;BatmanNumber of guesses = 326&quot;</code></pre>
+print(paste0(guess, &quot; Number of guesses = &quot;, (i*52)+j))</code></pre>
+<pre><code>## [1] &quot;Batman Number of guesses = 326&quot;</code></pre>
 </div>
-<div id="exercise-2---create-all-possible-combinations-hands-of-five-card-poker" class="section level3">
-<h3>Exercise 2 - Create all possible combinations hands of five card poker</h3>
-<p>Make all possible hands of poker when played wih five hands. One might accomplish this using expand.grid to create every possible combination, but the total possible combinations where order drawn matters totals too large a number for many computers to further operate on (+7 GB). There are actually only 2,598,960 unique hands that can be drawn. Write a function to produce all these hands as quickly as possible.</p>
-<pre class="r"><code>## Total number of card combinations
-choose(52,5)</code></pre>
-<pre><code>## [1] 2598960</code></pre>
-<pre class="r"><code>## Load deck dataframe
-cardDeck &lt;- data.frame(cardID = 1:52, 
-                   suite = rep(c(&quot;Spades&quot;,&quot;Clubs&quot;,&quot;Hearts&quot;,&quot;Diamonds&quot;), each=13),
-                   value = c(1:13),
-                   color = rep(c(&quot;Black&quot;,&quot;Red&quot;),each=26))
+<div id="exercise-2---tune-a-random-forest-model" class="section level3">
+<h3>Exercise 2 - Tune a Random Forest model</h3>
+<p>Find the optimal tuning for a Random Forest using foreach. Random forest has parameters that can be tuned to minimize error and increase prediction. Most notably, these include the <code>mtry</code> parameter which determines the number of predictors to test at each split and the <code>ntrees</code> parameter which determines the number of trees to grow. The <code>caret</code> package has a nice wrapper that allows for model tuning between one of these parameters, but it takes a bit of extra work to test both simultatenous and to select a specific metric to evaluate. We can accomplish the same thing using loops but since random forest typically runs slow, a for loop will take a long time. Write a parallel loop to execute the below code faster.</p>
+<p><a href="https://cran.r-project.org/web/packages/foreach/vignettes/nested.html">Here</a> is a good resource on nesting <code>foreach</code> loops. To transform multiple nested loops into a single parallelized operation, you’ll need to make use of the <code>%:%</code> operator.</p>
+<pre class="r"><code>library(randomForest)
+set.seed(11)
 
-## Deal hand
-deal &lt;- cardDeck[sample(cardDeck$cardID, 5, replace=F),]
-deal</code></pre>
-<pre><code>##    cardID    suite value color
-## 20     20    Clubs     7 Black
-## 15     15    Clubs     2 Black
-## 52     52 Diamonds    13   Red
-## 7       7   Spades     7 Black
-## 6       6   Spades     6 Black</code></pre>
+source(&quot;Parallelization//climSim.r&quot;)
+
+head(climate)
+head(population)
+
+trees &lt;- c(500,1000,1500,2000)
+mtrys &lt;- 1:ncol(climate)
+
+outDF &lt;- data.frame()
+for(i in trees){
+  for(j in mtrys){
+  
+  rf1 &lt;- randomForest(Pop1 ~ MAT + MAP + TMN + TMX, importance=T, ntree=i, data=population) 
+  RSQ &lt;- rf1$rsq[length(rf1$rsq)] ## extract psuedo rsquared values
+  MSE &lt;- rf1$mse[length(rf1$mse)] ## extracted mean square errors
+  tempDF &lt;- data.frame(ntrees = i, mtry = j, rsq=RSQ, mse=MSE) ## create dataframe of parameters and outputs
+  outDF &lt;- rbind(outDF, tempDF)
+  }
+}
+outDF</code></pre>
 </div>
 </div>
 
