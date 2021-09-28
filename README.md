@@ -21,7 +21,7 @@ With the wide-spread adoption of R for data management and analysis, there is hu
 
 **Contact**: Please contact alex.filazzola@outlook.com for more information.
 
-**Notes**: [Live Notepad]
+**Notes**: [Live Notepad](https://pad.riseup.net/p/SB_Meetup_R)
 
 **Feedback**: [Survey](https://easyretro.io/publicboard/yGVXR9eRebW4zP9Llz0XafsmuJe2/d7fc7d7f-98b7-45d3-b5ae-009b89bfb7b1)
 
